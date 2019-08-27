@@ -4,23 +4,38 @@ const obstacleSpacing = 50;
 
 var boids = [];
 var obstacles = [];
+var displayMessage = true;
+
+class BoxObstacle {
+
+	constructor(x1, y1, x2, y2) {
+		this.pos1 = createVector(x1, y1);
+		this.pos2 = createVector(x2, y2);
+	}
+
+	collide(pos, dir) {
+		let force = createVector(0, 0);
+
+		if (pos.x < this.pos1.x + obstacleSpacing)
+			force.add(createVector(1, 0));
+		if (pos.y < this.pos1.y + obstacleSpacing)
+			force.add(createVector(0, 1));
+		if (pos.x > this.pos2.x - obstacleSpacing)
+			force.add(createVector(-1, 0));
+		if (pos.y > this.pos2.y - obstacleSpacing)
+			force.add(createVector(0, -1));
+
+		force.normalize();
+		return force;
+	}
+
+}
 
 class CircleObstacle {
 
 	constructor(x, y, radius) {
 		this.pos = createVector(x, y);
 		this.radius = radius;
-	}
-
-	draw() {
-		push();
-
-		translate(this.pos.x, this.pos.y);
-		stroke(255, 255, 255);
-		noFill();
-		circle(0, 0, this.radius);
-
-		pop();
 	}
 
 	collide(pos, dir) {
@@ -69,21 +84,6 @@ class Boid {
 		}
 
 		return force;
-	}
-
-	getBoundsForce() {
-		let antiBounds = createVector(0, 0);
-
-		if (this.pos.x < boidRange)
-			antiBounds.add(createVector(1, 0));
-		if (this.pos.y < boidRange)
-			antiBounds.add(createVector(0, 1));
-		if (this.pos.x > width-boidRange)
-			antiBounds.add(createVector(-1, 0));
-		if (this.pos.y > height-boidRange)
-			antiBounds.add(createVector(0, -1));
-
-		return antiBounds;
 	}
 
 	getAvgDirForce(neighbours) {
@@ -143,7 +143,6 @@ class Boid {
 		this.dir.add(p5.Vector.mult(this.getAvgPosForce(neighbours), 0.02));
 		this.dir.add(p5.Vector.mult(this.getSeparationForce(neighbours), 0.1));
 		this.dir.limit(2);
-		this.dir.add(p5.Vector.mult(this.getBoundsForce(), 0.05));
 		this.dir.add(p5.Vector.mult(this.getObstaclesForce(), 0.05));
 		this.pos.add(p5.Vector.mult(this.dir, this.speed * deltaTime));
 	}
@@ -164,8 +163,10 @@ class Boid {
 
 function setup() {
 	createCanvas(windowWidth, windowHeight);
+	setTimeout(() => displayMessage = false, 3000);
 
 	obstacles.push(new CircleObstacle(width/2, height/2, 200));
+	obstacles.push(new BoxObstacle(0, 0, width, height));
 
 	for (let i = 0; i < 100; i++) {
 		boids.push(new Boid(random(width), random(height), random(TWO_PI)));
@@ -173,13 +174,21 @@ function setup() {
 }
 
 function draw() {
+	obstacles[0].pos = createVector(mouseX, mouseY);
 	background(42);
 
-	for (let boid of boids)
-		boid.move();
+	if (displayMessage) {
+		fill(255, 255, 255);
+		textSize(40);
+		textAlign(CENTER, CENTER);
+		text("Use the mouse to scare the birds!", width/2, height/2);
+	}
 
-	for (let obstacle of obstacles)
-		obstacle.draw();
+	if (focused) {
+		for (let boid of boids)
+			boid.move();
+	}
+
 	for (let boid of boids)
 		boid.draw();
 }
