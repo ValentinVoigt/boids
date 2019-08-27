@@ -1,4 +1,5 @@
 const range = 200;
+const spacing = 20;
 var boids = [];
 
 class Boid {
@@ -16,7 +17,7 @@ class Boid {
 			if (boid === this)
 				continue;
 
-			if (p5.Vector.dist(boid.pos, this.pos) < range) {
+			if (boid.pos.dist(this.pos) < range) {
 				neighbours.push(boid);
 			}
 		}
@@ -62,6 +63,8 @@ class Boid {
 				.reduce((a, b) => p5.Vector.add(a, b), createVector(0, 0));
 
 			avgPos.div(neighbours.length);
+			avgPos.sub(this.pos);
+			avgPos.normalize();
 
 			return avgPos;
 		} else {
@@ -70,21 +73,20 @@ class Boid {
 	}
 
 	getSeparationForce(neighbours) {
-		let nearest = null;
-		let nearestDist = Infinity;
+		let nearNeighbours = neighbours.filter((b) => this.pos.dist(b.pos) < spacing);
 
-		for (let boid of neighbours) {
-			let dist = this.pos.dist(boid.pos);
-			if (dist < nearestDist) {
-				nearest = boid;
-				nearestDist = dist;
+		if (nearNeighbours) {
+			let separation = createVector(0, 0);
+
+			for (let boid of nearNeighbours) {
+				let d = p5.Vector.sub(this.pos, boid.pos);
+				d.normalize();
+				d.div(this.pos.dist(boid.pos));
+				separation.add(d);
 			}
-		}
 
-		if (nearest) {
-			let antiNearest = p5.Vector.sub(nearest.pos, this.pos);
-			antiNearest.normalize();
-			return antiNearest;
+			separation.normalize();
+			return separation;
 		} else {
 			return createVector(0, 0);
 		}
@@ -94,7 +96,7 @@ class Boid {
 		const neighbours = this.getNeighbours();
 
 		this.dir.add(p5.Vector.mult(this.getAvgDirForce(neighbours), 0.02));
-		this.dir.add(p5.Vector.mult(this.getAvgPosForce(neighbours), 0.000002));
+		this.dir.add(p5.Vector.mult(this.getAvgPosForce(neighbours), 0.02));
 		this.dir.add(p5.Vector.mult(this.getSeparationForce(neighbours), 0.05));
 		this.dir.limit(2);
 		this.dir.add(p5.Vector.mult(this.getBoundsForce(), 0.03));
