@@ -1,5 +1,5 @@
 const range = 200;
-const spacing = 20;
+const spacing = 25;
 var boids = [];
 
 class Boid {
@@ -29,15 +29,13 @@ class Boid {
 		let antiBounds = createVector(0, 0);
 
 		if (this.pos.x < range)
-			antiBounds.add(createVector(range-this.pos.x, 0));
+			antiBounds.add(createVector(1, 0));
 		if (this.pos.y < range)
-			antiBounds.add(createVector(0, range-this.pos.y));
+			antiBounds.add(createVector(0, 1));
 		if (this.pos.x > width-range)
-			antiBounds.add(createVector(-range-this.pos.x+width, 0));
+			antiBounds.add(createVector(-1, 0));
 		if (this.pos.y > height-range)
-			antiBounds.add(createVector(0, -range-this.pos.y+height));
-
-		antiBounds.limit(2);
+			antiBounds.add(createVector(0, -1));
 
 		return antiBounds;
 	}
@@ -97,9 +95,9 @@ class Boid {
 
 		this.dir.add(p5.Vector.mult(this.getAvgDirForce(neighbours), 0.02));
 		this.dir.add(p5.Vector.mult(this.getAvgPosForce(neighbours), 0.02));
-		this.dir.add(p5.Vector.mult(this.getSeparationForce(neighbours), 0.05));
+		this.dir.add(p5.Vector.mult(this.getSeparationForce(neighbours), 0.1));
 		this.dir.limit(2);
-		this.dir.add(p5.Vector.mult(this.getBoundsForce(), 0.03));
+		this.dir.add(p5.Vector.mult(this.getBoundsForce(), 0.05));
 		this.pos.add(p5.Vector.mult(this.dir, this.speed * deltaTime));
 	}
 
